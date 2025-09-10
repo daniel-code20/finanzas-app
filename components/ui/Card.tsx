@@ -1,14 +1,15 @@
 import React from "react";
-import { StyleSheet, View } from "react-native";
+import { StyleSheet, View, ViewStyle } from "react-native";
 
 interface CardProps {
-  color?: string;
+  bgColor?: string; // fondo de la card
   children: React.ReactNode;
+  style?: ViewStyle | ViewStyle[]; // para personalizar estilos
 }
 
-export function Card({ color = "#000", children }: CardProps) {
+export function Card({ bgColor = "#f3f3f3c7", children, style }: CardProps) {
   return (
-    <View style={[styles.card, { borderColor: color }]}>
+    <View style={[styles.card, { backgroundColor: bgColor }, style]}>
       {children}
     </View>
   );
@@ -16,11 +17,9 @@ export function Card({ color = "#000", children }: CardProps) {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: "#f3f3f3c7",
     padding: 16,
     borderRadius: 24,
     marginVertical: 8,
-    borderWidth: 0,
     alignItems: "flex-start",
     width: "100%",
   },

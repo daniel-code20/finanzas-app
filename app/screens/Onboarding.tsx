@@ -17,13 +17,13 @@ const slides = [
     key: "2",
     title: "Registra tus gastos",
     text: "Agrega cualquier gasto diario y mantenlo todo en orden.",
-    image: require("../../assets/images/ilustracion.png"),
+    image: require("../../assets/images/ilustracion2.png"),
   },
   {
     key: "3",
     title: "Observa tu progreso",
     text: "Visualiza tus ingresos, gastos y ahorros en un solo lugar.",
-    image: require("../../assets/images/ilustracion.png"),
+    image: require("../../assets/images/ilustracion3.png"),
   },
 ];
 
@@ -41,12 +41,9 @@ export default function Onboarding() {
         {slides.map((slide) => (
           <View key={slide.key} style={styles.slide}>
             <Image
-              source={
-                typeof slide.image === "string"
-                  ? { uri: slide.image }
-                  : slide.image
-              }
+              source={slide.image}
               style={styles.image}
+              resizeMode="contain"
             />
             <Text style={styles.title}>{slide.title}</Text>
             <Text style={styles.text}>{slide.text}</Text>
@@ -54,13 +51,25 @@ export default function Onboarding() {
         ))}
       </PagerView>
 
-      {page === slides.length - 1 && (
-        <View style={styles.buttonContainer}>
-          <Button onPress={() => router.replace("/(tabs)/home")}>
-            ¡Empecemos!
-          </Button>
-        </View>
-      )}
+      {/* Puntos del carrusel */}
+      <View style={styles.dotsContainer}>
+        {slides.map((_, index) => (
+          <View
+            key={index}
+            style={[
+              styles.dot,
+              page === index ? styles.activeDot : styles.inactiveDot,
+            ]}
+          />
+        ))}
+      </View>
+
+      {/* Botón siempre visible */}
+      <View style={styles.buttonContainer}>
+        <Button onPress={() => router.replace("/(tabs)/home")}>
+          ¡Empecemos!
+        </Button>
+      </View>
     </View>
   );
 }
@@ -68,7 +77,7 @@ export default function Onboarding() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#ffffffff",
+    backgroundColor: "#ffffff",
   },
   pager: {
     flex: 1,
@@ -95,8 +104,25 @@ const styles = StyleSheet.create({
     color: "#555",
     textAlign: "center",
   },
+  dotsContainer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    marginBottom: 16,
+  },
+  dot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    marginHorizontal: 6,
+  },
+  activeDot: {
+    backgroundColor: "#fbd203",
+  },
+  inactiveDot: {
+    backgroundColor: "#ccc",
+  },
   buttonContainer: {
-    padding: 20,
+    paddingHorizontal: 20,
     marginBottom: 32,
   },
 });
