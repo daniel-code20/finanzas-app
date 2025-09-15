@@ -27,7 +27,7 @@ export default function HomeScreen() {
     <View style={styles.container}>
       <Text style={styles.greeting}>¡Hola, Dani! 👋</Text>
       <Text style={styles.phrase}>
-        Cada gasto cuenta, cada ahorro brilla ✨
+        Ahorra, planea, prospera ✨
       </Text>
 
       <Card style={[styles.summaryCard, { backgroundColor: "#7ec5ff98" }]}>
@@ -39,11 +39,11 @@ export default function HomeScreen() {
       </Card>
 
       <View style={styles.row}>
-        <Card style={[styles.smallCard, { backgroundColor: "#faffce98" }]}>
+        <Card style={[styles.smallCard, { backgroundColor: "#f4fda5ff" }]}>
           <Text style={styles.cardTitle}>💸 Gastos</Text>
           <Text style={styles.cardValue}>${totalGastos}</Text>
         </Card>
-        <Card style={[styles.smallCard, { backgroundColor: "#d0ecff94" }]}>
+        <Card style={[styles.smallCard, { backgroundColor: "#9d53ff94" }]}>
           <Text style={styles.cardTitle}>📈 Ingresos</Text>
           <Text style={styles.cardValue}>${totalIngresos}</Text>
         </Card>

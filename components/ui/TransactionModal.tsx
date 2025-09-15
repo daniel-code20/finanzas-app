@@ -30,10 +30,12 @@ export function TransactionModal({
 }: TransactionModalProps) {
   const [title, setTitle] = useState("");
   const [amount, setAmount] = useState("");
-  const [type, setType] = useState<"ingreso" | "gasto">("gasto");
+  const [type, setType] = useState<"ingreso" | "gasto" | undefined>(undefined);
   const [date, setDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const [error, setError] = useState("");
+
+  // errores individuales
+  const [errors, setErrors] = useState<{ title?: string; amount?: string; type?: string }>({});
 
   const colors = {
     ingreso: { border: "#2ecc71", background: "#d1f7d6", text: "#2ecc71" },
@@ -44,32 +46,28 @@ export function TransactionModal({
     if (visible) {
       setTitle("");
       setAmount("");
-      setType("gasto");
+      setType(undefined); // <-- placeholder activo
       setDate(new Date());
       setShowDatePicker(false);
-      setError("");
+      setErrors({});
     }
   }, [visible]);
 
   const handleSave = () => {
-    if (!title.trim() && !amount.trim()) {
-      setError("🚨 Título y monto son obligatorios!");
-      return;
+    let newErrors: { title?: string; amount?: string; type?: string } = {};
+
+    if (!title.trim()) newErrors.title = "⚠️ El título es obligatorio";
+    if (!amount.trim()) newErrors.amount = "💰 El monto no puede estar vacío";
+    else if (isNaN(Number(amount)))
+      newErrors.amount = "❌ El monto debe ser un número válido";
+
+    if (!type) newErrors.type = "⚠️ Selecciona un tipo de movimiento"; // <-- validación tipo
+
+    setErrors(newErrors);
+
+    if (Object.keys(newErrors).length === 0 && type) {
+      onSave(title, amount, type, date);
     }
-    if (!title.trim()) {
-      setError("⚠️ No olvides poner un título!");
-      return;
-    }
-    if (!amount.trim()) {
-      setError("💰 El monto no puede estar vacío!");
-      return;
-    }
-    if (isNaN(Number(amount))) {
-      setError("❌ El monto debe ser un número válido!");
-      return;
-    }
-    setError("");
-    onSave(title, amount, type, date);
   };
 
   const formatDate = (d: Date) =>
@@ -93,8 +91,9 @@ export function TransactionModal({
           </TouchableOpacity>
 
           <Text style={styles.modalTitle}>Nuevo movimiento</Text>
-
-          {error ? <Text style={styles.errorText}>{error}</Text> : null}
+          <Text style={styles.modalSubtitle}>
+            Ahorra hoy, disfruta mañana 🌱💸
+          </Text>
 
           {/* Input Título */}
           <TextInput
@@ -103,15 +102,30 @@ export function TransactionModal({
             onChangeText={setTitle}
             style={styles.input}
           />
+          {errors.title && <Text style={styles.errorText}>{errors.title}</Text>}
 
           {/* Input Monto */}
           <TextInput
             placeholder="Monto"
-            value={amount}
+            value={amount ? (type === "ingreso" ? "+" : type === "gasto" ? "-" : "") + amount : ""}
             onChangeText={(text) => setAmount(text.replace(/[^0-9.]/g, ""))}
             keyboardType="numeric"
-            style={styles.input}
+            style={[
+              styles.input,
+              {
+                color:
+                  type === "ingreso"
+                    ? colors.ingreso.text
+                    : type === "gasto"
+                    ? colors.gasto.text
+                    : "#000",
+                fontWeight: "400",
+              },
+            ]}
           />
+          {errors.amount && (
+            <Text style={styles.errorText}>{errors.amount}</Text>
+          )}
 
           {/* Dropdown Tipo */}
           <View style={styles.dropdownWrapper}>
@@ -122,29 +136,33 @@ export function TransactionModal({
               ]}
               selectedValue={type}
               onValueChange={(value) => setType(value)}
+              placeholder="Selecciona una opción"
               inputStyle={{
                 backgroundColor:
                   type === "ingreso"
                     ? colors.ingreso.background
-                    : colors.gasto.background,
-                borderColor:
-                  type === "ingreso"
-                    ? colors.ingreso.border
-                    : colors.gasto.border,
+                    : type === "gasto"
+                    ? colors.gasto.background
+                    : "#f7f7f7ff",
               }}
               textStyle={{
                 color:
-                  type === "ingreso" ? colors.ingreso.text : colors.gasto.text,
-                fontWeight: "600",
+                  type === "ingreso"
+                    ? colors.ingreso.text
+                    : type === "gasto"
+                    ? colors.gasto.text
+                    : "#999",
+                fontWeight: "400",
               }}
               optionStyle={{
                 backgroundColor: "#fff",
                 borderColor: "#ccc",
               }}
               optionTextStyle={{
-                fontWeight: "500", // solo propiedades que no sean color
+                fontWeight: "400",
               }}
             />
+            {errors.type && <Text style={styles.errorText}>{errors.type}</Text>}
           </View>
 
           {/* Selector de Fecha */}
@@ -152,7 +170,7 @@ export function TransactionModal({
             onPress={() => setShowDatePicker(true)}
             style={styles.dateButton}
           >
-            <Text style={styles.dateText}>Fecha: {formatDate(date)}</Text>
+            <Text style={styles.dateText}>{formatDate(date)}</Text>
           </TouchableOpacity>
 
           {showDatePicker && (
@@ -207,21 +225,28 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     textAlign: "center",
   },
+  modalSubtitle: {
+    fontSize: 14,
+    color: "#666",
+    marginBottom: 16,
+    textAlign: "center",
+    fontStyle: "italic",
+  },
   errorText: {
     color: "#e74c3c",
     marginBottom: 8,
-    fontWeight: "600",
-    textAlign: "center",
+    fontWeight: "500",
+    fontSize: 13,
   },
   input: {
-    borderWidth: 1,
+    borderWidth: 0,
     borderColor: "#ccc",
-    borderRadius: 8,
+    borderRadius: 12,
     padding: 12,
-    marginBottom: 12,
+    marginBottom: 8, // menos espacio para que el error se vea pegado
     fontSize: 16,
     color: "#000",
-    backgroundColor: "#fff",
+    backgroundColor: "#f7f7f7ff",
   },
   dropdownWrapper: {
     marginBottom: 12,
@@ -230,14 +255,14 @@ const styles = StyleSheet.create({
     padding: 12,
     borderWidth: 1,
     borderColor: "#ccc",
-    borderRadius: 8,
+    borderRadius: 12,
     marginBottom: 12,
     alignItems: "center",
     backgroundColor: "#fafafa",
   },
   dateText: {
     fontSize: 16,
-    color: "#333",
+    color: "#646464ff",
   },
   saveButton: {
     marginTop: 8,

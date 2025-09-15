@@ -1,12 +1,13 @@
+import { Ionicons } from "@expo/vector-icons";
 import React, { useState } from "react";
 import {
-    FlatList,
-    StyleSheet,
-    Text,
-    TextStyle,
-    TouchableOpacity,
-    View,
-    ViewStyle,
+  FlatList,
+  StyleSheet,
+  Text,
+  TextStyle,
+  TouchableOpacity,
+  View,
+  ViewStyle,
 } from "react-native";
 
 // Genérico <T extends string> para tipos estrictos
@@ -14,7 +15,7 @@ export type Option<T extends string> = { label: string; value: T };
 
 type CustomDropdownProps<T extends string> = {
   options: Option<T>[];
-  selectedValue: T;
+  selectedValue?: T;
   onValueChange: (value: T) => void;
   style?: ViewStyle; // Contenedor principal
   inputStyle?: ViewStyle; // Solo el input
@@ -33,17 +34,12 @@ export function CustomDropdown<T extends string>({
   optionStyle,
   textStyle,
   optionTextStyle,
-  placeholder = "Selecciona...",
+  placeholder = "Selecciona una opción",
 }: CustomDropdownProps<T>) {
   const [open, setOpen] = useState(false);
 
   const selectedOption = options.find((o) => o.value === selectedValue);
-  const selectedLabel = selectedOption?.label;
-
-  const handleSelect = (value: T) => {
-    onValueChange(value);
-    setOpen(false);
-  };
+  const selectedLabel = selectedOption?.label || placeholder;
 
   const inputBg =
     selectedOption?.value === "ingreso"
@@ -57,7 +53,12 @@ export function CustomDropdown<T extends string>({
       ? "#2ecc71"
       : selectedOption?.value === "gasto"
       ? "#e74c3c"
-      : "#000";
+      : "#999"; // gris suave para placeholder
+
+  const handleSelect = (value: T) => {
+    onValueChange(value);
+    setOpen(false);
+  };
 
   return (
     <View style={[styles.container, style]}>
@@ -66,12 +67,20 @@ export function CustomDropdown<T extends string>({
         style={[styles.dropdown, { backgroundColor: inputBg }, inputStyle]}
         onPress={() => setOpen(!open)}
       >
-        <Text style={[styles.text, { color: inputTextColor }, textStyle]}>
-          {selectedLabel || placeholder}
+        <Text
+          style={[
+            styles.text,
+            { color: inputTextColor, fontStyle: !selectedOption ? "italic" : "normal" },
+            textStyle,
+          ]}
+        >
+          {selectedLabel}
         </Text>
-        <Text style={[styles.text, { color: inputTextColor }, textStyle]}>
-          {open ? "▲" : "▼"}
-        </Text>
+        <Ionicons
+          name={open ? "chevron-up" : "chevron-down"}
+          size={20}
+          color={inputTextColor}
+        />
       </TouchableOpacity>
 
       {/* OPCIONES */}
@@ -81,12 +90,11 @@ export function CustomDropdown<T extends string>({
             data={options}
             keyExtractor={(item) => item.value}
             renderItem={({ item, index }) => {
-              // Aquí usamos item.value, no selectedValue ni type
               const optionTextColor =
                 item.value === "ingreso"
-                  ? "#2ecc71" // verde
+                  ? "#000000ff"
                   : item.value === "gasto"
-                  ? "#e74c3c" // rojo
+                  ? "#000000ff"
                   : "#000";
 
               return (
@@ -101,13 +109,7 @@ export function CustomDropdown<T extends string>({
                   ]}
                   onPress={() => handleSelect(item.value)}
                 >
-                  <Text
-                    style={[
-                      styles.text,
-                      { color: optionTextColor },
-                      optionTextStyle,
-                    ]}
-                  >
+                  <Text style={[styles.text, { color: optionTextColor }, optionTextStyle]}>
                     {item.label}
                   </Text>
                 </TouchableOpacity>
@@ -127,21 +129,23 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     padding: 12,
-    borderWidth: 1,
+    borderWidth: 0,
     borderColor: "#ccc",
-    borderRadius: 8,
+    borderRadius: 12,
   },
   text: { fontSize: 16 },
   optionsContainer: {
-    marginTop: 4,
+    marginTop: 6,
     maxHeight: 150,
-    borderWidth: 1,
+    borderWidth: 0,
     borderColor: "#ccc",
     borderRadius: 8,
-    backgroundColor: "#fff",
+    backgroundColor: "#f3f3f3ff",
     overflow: "hidden",
+    elevation: 6,
   },
   option: {
     padding: 12,
+    backgroundColor: "transparent",
   },
 });
