@@ -1,40 +1,21 @@
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { TransactionModal } from "@/components/ui/TransactionModal";
+import { useTransactions } from "@/context/TransactionsContext";
 import { useState } from "react";
 import { FlatList, StyleSheet, Text, View } from "react-native";
 
-type Transaction = {
-  id: string;
-  type: "ingreso" | "gasto";
-  title: string;
-  amount: number;
-  date: string;
-  bgColor: string;
-};
-
-const bgColors = ["#fff3ee9a","#faffce98","#d0ecff94"];
-
 export default function TransactionsScreen() {
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const { transactions, addTransaction } = useTransactions();
   const [modalVisible, setModalVisible] = useState(false);
-
-  const handleAddTransaction = (title: string, amount: string, type: "ingreso" | "gasto", date: Date) => {
-    const newTransaction: Transaction = {
-      id: Date.now().toString(),
-      title,
-      amount: parseFloat(amount) * (type === "gasto" ? -1 : 1),
-      type,
-      date: date.toISOString(),
-      bgColor: bgColors[Math.floor(Math.random() * bgColors.length)],
-    };
-    setTransactions([newTransaction, ...transactions]);
-    setModalVisible(false);
-  };
 
   const formatDate = (d: string | Date) => {
     const date = typeof d === "string" ? new Date(d) : d;
-    return date.toLocaleDateString("es-ES",{ day:"2-digit", month:"short", year:"numeric" });
+    return date.toLocaleDateString("es-ES", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
   };
 
   return (
@@ -45,7 +26,7 @@ export default function TransactionsScreen() {
       {transactions.length === 0 ? (
         <View style={styles.emptyContainer}>
           <Text style={styles.emptyMessage}>
-            🎉 ¡Todavía no hay movimientos! Agrega algo para comenzar la diversión 💸
+            🎉 ¡Todavía no hay movimientos! Agrega algo 💸
           </Text>
         </View>
       ) : (
@@ -56,26 +37,34 @@ export default function TransactionsScreen() {
             <Card bgColor={item.bgColor} style={styles.card}>
               <View style={styles.cardContent}>
                 <Text style={styles.cardTitle}>{item.title}</Text>
-                <Text style={[styles.cardAmount, item.type==="ingreso"?styles.income:styles.expense]}>
+                <Text
+                  style={[
+                    styles.cardAmount,
+                    item.type === "ingreso" ? styles.income : styles.expense,
+                  ]}
+                >
                   {item.amount > 0 ? `+${item.amount}` : item.amount}$
                 </Text>
               </View>
               <Text style={styles.cardDate}>{formatDate(item.date)}</Text>
             </Card>
           )}
-          contentContainerStyle={{ paddingBottom: 100 }}
         />
       )}
 
-      {/* Botón siempre abajo */}
       <View style={styles.buttonContainer}>
-        <Button onPress={() => setModalVisible(true)}>Agregar movimiento</Button>
+        <Button onPress={() => setModalVisible(true)}>
+          Agregar movimiento
+        </Button>
       </View>
 
       <TransactionModal
         visible={modalVisible}
         onClose={() => setModalVisible(false)}
-        onSave={handleAddTransaction}
+        onSave={(title, amount, type, date) => {
+          addTransaction(title, amount, type, date);
+          setModalVisible(false);
+        }}
       />
     </View>
   );
@@ -83,15 +72,38 @@ export default function TransactionsScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 20, paddingTop: 60, backgroundColor: "#fff" },
-  title: { fontSize: 24, fontWeight: "700", marginBottom: 4, marginRight: 4, textAlign:"center" },
-  subtitle: { fontSize: 16, color: "#555", marginBottom: 20, textAlign:"center" },
+  title: {
+    fontSize: 24,
+    fontWeight: "700",
+    marginBottom: 4,
+    marginRight: 4,
+    textAlign: "center",
+  },
+  subtitle: {
+    fontSize: 16,
+    color: "#555",
+    marginBottom: 20,
+    textAlign: "center",
+  },
   emptyContainer: { flex: 1, justifyContent: "center", alignItems: "center" },
   emptyMessage: { fontSize: 16, color: "#999", textAlign: "center" },
-  card: { paddingVertical: 16, paddingHorizontal: 20, position: "relative", borderRadius: 12 },
+  card: {
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    position: "relative",
+    borderRadius: 12,
+  },
   cardContent: { flexDirection: "column" },
   cardTitle: { fontSize: 18, fontWeight: "600" },
   cardAmount: { fontSize: 14, fontWeight: "500", marginTop: 4 },
-  cardDate: { position: "absolute", top: 8, right: 12, fontSize: 12, color: "#888", fontStyle: "italic" },
+  cardDate: {
+    position: "absolute",
+    top: 8,
+    right: 12,
+    fontSize: 12,
+    color: "#888",
+    fontStyle: "italic",
+  },
   income: { color: "#2ecc71" },
   expense: { color: "#e74c3c" },
   buttonContainer: { position: "absolute", bottom: 20, left: 20, right: 20 },

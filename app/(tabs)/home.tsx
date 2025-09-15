@@ -1,38 +1,41 @@
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { TransactionModal } from "@/components/ui/TransactionModal";
+import { useTransactions } from "@/context/TransactionsContext";
 import { useState } from "react";
 import { FlatList, StyleSheet, Text, View } from "react-native";
 
-type Transaction = {
-  id: string;
-  type: "ingreso" | "gasto";
-  title: string;
-  amount: number;
-  date: string;
-};
-
 export default function HomeScreen() {
-  // Simulación de movimientos
-  const [transactions, setTransactions] = useState<Transaction[]>([
-    { id: "1", type: "ingreso", title: "Pago de la U", amount: 200, date: "2025-09-10" },
-    { id: "2", type: "gasto", title: "Gasolina", amount: 25, date: "2025-09-10" },
-    { id: "3", type: "gasto", title: "Pizza", amount: 15, date: "2025-09-09" },
-  ]);
+  const { transactions, addTransaction } = useTransactions();
+  const [modalVisible, setModalVisible] = useState(false);
 
-  const totalIngresos = transactions.filter(t => t.type==="ingreso").reduce((sum, t) => sum + t.amount, 0);
-  const totalGastos = transactions.filter(t => t.type==="gasto").reduce((sum, t) => sum + t.amount, 0);
+  const totalIngresos = transactions
+    .filter((t) => t.type === "ingreso")
+    .reduce((sum, t) => sum + t.amount, 0);
+
+  const totalGastos = transactions
+    .filter((t) => t.type === "gasto")
+    .reduce((sum, t) => sum + Math.abs(t.amount), 0);
+
   const ahorro = totalIngresos - totalGastos;
-  const ahorroPercent = totalIngresos ? Math.round((ahorro / totalIngresos) * 100) : 0;
-
+  const ahorroVisible = Math.max(ahorro, 0);
+  const ahorroPercent = totalIngresos
+    ? Math.min(Math.max(Math.round((ahorro / totalIngresos) * 100), 0), 100)
+    : 0;
+    
   return (
     <View style={styles.container}>
       <Text style={styles.greeting}>¡Hola, Dani! 👋</Text>
-      <Text style={styles.phrase}>Cada gasto cuenta, cada ahorro brilla ✨</Text>
+      <Text style={styles.phrase}>
+        Cada gasto cuenta, cada ahorro brilla ✨
+      </Text>
 
-      <Card style={styles.summaryCard}>
+      <Card style={[styles.summaryCard, { backgroundColor: "#7ec5ff98" }]}>
         <Text style={styles.cardTitle}>Saldo actual</Text>
-        <Text style={styles.cardValue}>${ahorro}</Text>
-        <Text style={styles.cardSubtitle}>{ahorroPercent}% de tus ingresos ahorrados</Text>
+        <Text style={styles.cardValue}>${ahorroVisible}</Text>
+        <Text style={styles.cardSubtitle}>
+          {ahorroPercent}% de tus ingresos ahorrados
+        </Text>
       </Card>
 
       <View style={styles.row}>
@@ -48,19 +51,35 @@ export default function HomeScreen() {
 
       <Text style={styles.subtitle}>Últimos movimientos</Text>
       <FlatList
-        data={transactions.slice(0,3)}
-        keyExtractor={item => item.id}
+        data={transactions.slice(0, 3)}
+        keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <Card style={styles.transactionCard}>
             <Text style={styles.transactionTitle}>{item.title}</Text>
-            <Text style={[styles.transactionAmount, item.type==="ingreso"?styles.income:styles.expense]}>
-              {item.type==="ingreso"?`+${item.amount}`:`-${item.amount}` }$
+            <Text
+              style={[
+                styles.transactionAmount,
+                item.type === "ingreso" ? styles.income : styles.expense,
+              ]}
+            >
+              {item.type === "ingreso" ? `+${item.amount}` : `${item.amount}`}$
             </Text>
           </Card>
         )}
       />
 
-      <Button onPress={() => {}}>Agregar movimiento</Button>
+      {/* Botón para abrir modal */}
+      <Button onPress={() => setModalVisible(true)}>Agregar movimiento</Button>
+
+      {/* Modal reutilizado */}
+      <TransactionModal
+        visible={modalVisible}
+        onClose={() => setModalVisible(false)}
+        onSave={(title, amount, type, date) => {
+          addTransaction(title, amount, type, date);
+          setModalVisible(false);
+        }}
+      />
     </View>
   );
 }
@@ -73,7 +92,11 @@ const styles = StyleSheet.create({
   cardTitle: { fontSize: 18, fontWeight: "600", marginBottom: 4 },
   cardValue: { fontSize: 20, fontWeight: "700" },
   cardSubtitle: { fontSize: 14, color: "#555" },
-  row: { flexDirection: "row", justifyContent: "space-between", marginBottom: 20 },
+  row: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 20,
+  },
   smallCard: { flex: 1, padding: 16, marginHorizontal: 4, borderRadius: 12 },
   subtitle: { fontSize: 16, fontWeight: "600", marginBottom: 8 },
   transactionCard: { padding: 12, marginBottom: 8, borderRadius: 10 },
