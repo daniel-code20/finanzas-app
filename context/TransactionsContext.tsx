@@ -17,13 +17,12 @@ type TransactionsContextType = {
     type: "ingreso" | "gasto",
     date: Date
   ) => void;
+  deleteTransaction: (id: string) => void; // <-- nueva función
 };
 
 const TransactionsContext = createContext<TransactionsContextType | undefined>(
   undefined
 );
-
-const bgColors = ["#fff3ee9a", "#faffce98", "#d0ecff94"];
 
 export function TransactionsProvider({ children }: { children: ReactNode }) {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -45,8 +44,15 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
     setTransactions((prev) => [newTransaction, ...prev]);
   };
 
+  // Nueva función para borrar transacciones
+  const deleteTransaction = (id: string) => {
+    setTransactions((prev) => prev.filter((item) => item.id !== id));
+  };
+
   return (
-    <TransactionsContext.Provider value={{ transactions, addTransaction }}>
+    <TransactionsContext.Provider
+      value={{ transactions, addTransaction, deleteTransaction }}
+    >
       {children}
     </TransactionsContext.Provider>
   );
